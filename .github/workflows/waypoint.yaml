@@ -1,33 +1,39 @@
-project = "clj-demo"
+name: 'waypoint'
+on: push
 
-app "clj-demo" {
-  labels = {
-    "service" = "clj-demo",
-    "env"     = "dev"
-  }
-
-  build {
-    use "pack" {
-    }
-    registry {
-      use "aws-ecr" {
-        region     = "us-east-1"
-        repository = "waypoint-clj"
-        tag        = "latest"
-      }
-    }
-  }
-
-  deploy {
-    use "kubernetes" {
-      probe_path = "/"
-    }
-  }
-
-  release {
-    use "kubernetes" {
-      load_balancer = true
-      port          = 80
-    }
-  }
-}
+jobs:
+  waypoint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/action-waypoint@c98d9c3
+        name: Setup
+        with:
+          version: '0.1.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          waypoint_server_address: 'afa1be28c76944d15bff7969efc8f6c3-1774364022.us-east-1.elb.amazonaws.com:9701'
+          waypoint_server_ui: 'https://afa1be28c76944d15bff7969efc8f6c3-1774364022.us-east-1.elb.amazonaws.com:9702'
+          waypoint_server_token: ${{ secrets.WAYPOINT_SERVER_TOKEN }}
+          workspace: default
+      - uses: hashicorp/action-waypoint@c98d9c3
+        name: Build
+        with:
+          operation: build
+          version: '0.1.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workspace: default
+      - uses: hashicorp/action-waypoint@c98d9c3
+        name: Deploy
+        with:
+          operation: deploy
+          version: '0.1.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workspace: default
+      - uses: hashicorp/action-waypoint@c98d9c3
+        name: Release
+        if: ${{ github.ref == 'refs/heads/master' }}
+        with:
+          operation: release
+          version: '0.1.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workspace: default
