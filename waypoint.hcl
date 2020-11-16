@@ -1,4 +1,4 @@
-project = "clj-demo"
+project = "waypoint-demos"
 
 app "clj-demo" {
   labels = {
@@ -8,12 +8,12 @@ app "clj-demo" {
 
   build {
     use "pack" {
+    builder="paketobuildpacks/builder:base"
     }
     registry {
-      use "aws-ecr" {
-        region     = "us-east-1"
-        repository = "waypoint-clj"
-        tag        = "latest"
+      use "docker" {
+        image = "harbor.ravegrunt.com/waypointdemos/waypoint-clojure"
+        tag  = "latest"
       }
     }
   }
@@ -21,13 +21,16 @@ app "clj-demo" {
   deploy {
     use "kubernetes" {
       probe_path = "/"
+      namespace = "waypoint-clj"
+      service_port = 8080
     }
   }
 
   release {
     use "kubernetes" {
       load_balancer = true
-      port          = 80
+      port          = 8080
+      namespace = "waypoint-clj-prod"
     }
   }
 }
